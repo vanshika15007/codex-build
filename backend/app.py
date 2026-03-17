@@ -6,7 +6,7 @@ from urllib import error, parse, request
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-app = FastAPI(title="Nova Chatbot API", version="2.0.0")
+app = FastAPI(title="Nova Chatbot API", version="2.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +30,8 @@ knowledge_base = {
     "placement": "Placement support includes resume workshops, mock interviews, and aptitude prep.",
     "hostel": "Separate hostels with security, Wi-Fi, and mess are available.",
     "library": "Library access includes physical books, journals, and digital resources.",
+    "career": "For career growth, focus on practical projects, internships, communication skills, and a strong portfolio.",
+    "real_world": "Try solving real-world problems by defining the issue, collecting data, testing small solutions, and measuring impact.",
 }
 
 aliases = {
@@ -37,17 +39,17 @@ aliases = {
     "fees": ["fees", "fee", "cost", "tuition", "scholarship"],
     "exam": ["exam", "examination", "test", "semester"],
     "course": ["course", "courses", "program", "degree", "branch"],
-    "placement": ["placement", "placements", "job", "recruitment", "career"],
+    "placement": ["placement", "placements", "job", "recruitment", "career fair"],
     "hostel": ["hostel", "accommodation", "room", "mess"],
     "library": ["library", "books", "journal", "digital resources"],
+    "career": ["career", "resume", "interview", "internship", "portfolio"],
+    "real_world": ["real world", "case study", "problem solving", "project", "impact"],
 }
 
-greetings = ["hi", "hello", "hey", "good morning", "good evening"]
-
 generic_fallbacks = [
-    "I can answer general questions, help with ideas, and also assist with student topics. Try asking me anything!",
-    "I’m ready for both casual and academic chats. You can ask for explanations, plans, or creative ideas.",
-    "Want to play? Try the Guess Game button in the UI, or ask me for a quiz question.",
+    "I can help with study plans, concept explanations, and professional real-world problem solving. Ask for a step-by-step plan.",
+    "Try asking for a project roadmap, exam preparation schedule, or interview-style case analysis.",
+    "I support educational and professional growth topics, including productivity, learning strategy, and practical applications.",
 ]
 def ask_gemini(prompt: str) -> str | None:
     api_key = os.getenv("GEMINI_API_KEY")
@@ -65,7 +67,8 @@ def ask_gemini(prompt: str) -> str | None:
             {
                 "parts": [
                     {
-                        "text": "You are Nova, a friendly and concise chatbot. Help users with general, educational, and creative queries. "
+                        "text": "You are Nova, a professional learning assistant. Be concise, structured, and practical. "
+                        "Provide actionable, real-world study advice when relevant. "
                         f"User message: {prompt}"
                     }
                 ]

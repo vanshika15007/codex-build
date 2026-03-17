@@ -1,18 +1,14 @@
-# Nova Chat Studio (React + FastAPI + Gemini-ready)
+# Nova Professional Study Copilot (React + FastAPI + Gemini-ready)
 
-A polished, more playful chatbot app with:
-- a classy chat UI
-- general-purpose conversation support
-- optional Gemini API integration
-- a built-in mini game (Guess the Number)
+A more professional chatbot experience designed for students and early professionals.
 
-## Features
+## What’s improved
 
-- **General chatbot** (not limited to admission/course only)
-- **Gemini API support** via backend env vars
-- **Fallback local responses** when Gemini key is missing
-- **Quick prompt buttons** for fast interactions
-- **Mini game mode** (Guess a number from 1-20)
+- **Professional chat interface** with cleaner structure and focused study workflow
+- **Scenario-based game** for real-world decision making (A/B/C challenge)
+- **Curated video resources** for high-quality learning (Khan Academy, MIT OCW, CrashCourse, TED-Ed)
+- **Gemini API support** through backend environment variables
+- **Smart fallback responses** for educational and career-oriented questions
 
 ## Project structure
 
@@ -60,7 +56,7 @@ If `GEMINI_API_KEY` is not set, backend will use local fallback responses.
 ### `POST /chat`
 
 ```json
-{ "text": "Give me a productivity routine" }
+{ "text": "Build a practical study plan for the next 7 days" }
 ```
 
 ### `GET /health`

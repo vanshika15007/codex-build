@@ -6,10 +6,57 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 const quickPrompts = [
-  "Plan a 3-day study schedule",
-  "Give me tips to stay productive",
-  "Tell me a fun science fact",
-  "What courses do you offer?",
+  "Build a 1-week study plan for physics",
+  "Give me 5 real-world math applications",
+  "Explain climate change with actionable solutions",
+  "Prepare me for an interview case study",
+];
+
+const studyVideos = [
+  {
+    title: "Khan Academy - Study & Practice Library",
+    topic: "Math, science, economics",
+    url: "https://www.khanacademy.org/",
+  },
+  {
+    title: "MIT OpenCourseWare",
+    topic: "University-level engineering and science",
+    url: "https://ocw.mit.edu/",
+  },
+  {
+    title: "CrashCourse",
+    topic: "High-quality concept videos",
+    url: "https://www.youtube.com/@crashcourse",
+  },
+  {
+    title: "TED-Ed",
+    topic: "Real-world ideas and critical thinking",
+    url: "https://www.youtube.com/@TEDEd",
+  },
+];
+
+const scenarioChallenges = [
+  {
+    prompt:
+      "🏥 Scenario 1: A city hospital has long patient wait times. Which first step is most professional? (A) Buy new software immediately (B) Collect data on patient flow and bottlenecks (C) Hire more staff without analysis)",
+    answer: "b",
+    feedback:
+      "Excellent approach. Strong decisions start with measurable evidence and root-cause analysis.",
+  },
+  {
+    prompt:
+      "🌱 Scenario 2: A school wants to reduce plastic waste. What should come first? (A) Awareness campaign + baseline audit (B) Ban all plastics tomorrow (C) Ignore cost and logistics)",
+    answer: "a",
+    feedback:
+      "Correct. A baseline audit and communication plan make sustainability changes realistic and scalable.",
+  },
+  {
+    prompt:
+      "📊 Scenario 3: Exam scores dropped across classes. Best first action? (A) Blame students (B) Review assessment quality and study habits data (C) Increase homework volume only)",
+    answer: "b",
+    feedback:
+      "Great. Reviewing data and assessment quality helps you solve the right problem, not just symptoms.",
+  },
 ];
 
 function App() {
@@ -17,7 +64,7 @@ function App() {
   const [chat, setChat] = useState([
     {
       sender: "Bot",
-      text: "Hey! I’m Nova 🤖 — your all-purpose chatbot. I can help with study support, ideas, coding, general chats, and mini-games.",
+      text: "Welcome to Nova Professional Learning Assistant. I can help with study plans, real-world problem solving, interview-style scenarios, and AI support via Gemini.",
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -26,7 +73,7 @@ function App() {
   ]);
   const [typing, setTyping] = useState(false);
   const [error, setError] = useState("");
-  const [game, setGame] = useState({ active: false, number: null, turns: 0 });
+  const [challenge, setChallenge] = useState({ active: false, index: 0, score: 0 });
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -47,43 +94,48 @@ function App() {
     ]);
   };
 
-  const startGuessGame = () => {
-    const target = Math.floor(Math.random() * 20) + 1;
-    setGame({ active: true, number: target, turns: 0 });
+  const startScenarioGame = () => {
+    setChallenge({ active: true, index: 0, score: 0 });
     pushMessage(
       "Bot",
-      "🎮 Guess game started! I picked a number between 1 and 20. Type a number."
+      "🎯 Professional Scenario Challenge started. Reply with A, B, or C."
     );
   };
 
-  const stopGuessGame = () => {
-    setGame({ active: false, number: null, turns: 0 });
-    pushMessage("Bot", "Game ended. Want to play again? Tap Start Game.");
+  const stopScenarioGame = () => {
+    setChallenge({ active: false, index: 0, score: 0 });
+    pushMessage("Bot", "Scenario challenge ended. You can restart anytime.");
   };
 
-  const handleGameTurn = (rawMessage) => {
-    const guess = Number(rawMessage);
-    if (Number.isNaN(guess)) {
-      pushMessage("Bot", "Please enter a valid number between 1 and 20.");
-      return true;
+  const handleScenarioTurn = (rawMessage) => {
+    const answer = rawMessage.trim().toLowerCase();
+    if (!["a", "b", "c"].includes(answer)) {
+      pushMessage("Bot", "Please answer using A, B, or C.");
+      return;
     }
 
-    const nextTurns = game.turns + 1;
-    setGame((prev) => ({ ...prev, turns: nextTurns }));
-
-    if (guess === game.number) {
-      pushMessage("Bot", `🔥 Correct! You guessed it in ${nextTurns} tries.`);
-      setGame({ active: false, number: null, turns: 0 });
-      return true;
-    }
+    const current = scenarioChallenges[challenge.index];
+    const isCorrect = answer === current.answer;
+    const nextScore = isCorrect ? challenge.score + 1 : challenge.score;
 
     pushMessage(
       "Bot",
-      guess < game.number
-        ? "Too low ⬇️ Try again."
-        : "Too high ⬆️ Try again."
+      isCorrect
+        ? `✅ Correct. ${current.feedback}`
+        : `❌ Not the best choice this time. ${current.feedback}`
     );
-    return true;
+    const nextIndex = challenge.index + 1;
+    if (nextIndex >= scenarioChallenges.length) {
+      pushMessage(
+        "Bot",
+        `Challenge complete. Final score: ${nextScore}/${scenarioChallenges.length}. Strong professional thinking practice!`
+      );
+      setChallenge({ active: false, index: 0, score: 0 });
+      return;
+    }
+
+    setChallenge({ active: true, index: nextIndex, score: nextScore });
+    pushMessage("Bot", scenarioChallenges[nextIndex].prompt);
   };
 
   const sendMessage = async (forcedMessage) => {
@@ -94,8 +146,8 @@ function App() {
 
     setError("");
 
-    if (game.active) {
-      handleGameTurn(messageToSend);
+    if (challenge.active) {
+      handleScenarioTurn(messageToSend);
       return;
     }
 
@@ -112,7 +164,6 @@ function App() {
       setError(
         "Could not reach backend. Please check if FastAPI server is running."
       );
-      setTyping(false); // FIXED
     } finally {
       setTyping(false);
     }
@@ -127,29 +178,51 @@ function App() {
     <div className="app-container">
       <div className="chat-container">
         <div className="chat-title-wrap">
-          <h2 className="chat-title">✨ Nova Chat Studio</h2>
+          <h2 className="chat-title">Nova Professional Study Copilot</h2>
           <p className="subtitle">
-            General AI assistant + student helper + mini games
+            Real-world learning • Professional scenarios • Study-focused AI
           </p>
+        </div>
+        <div className="learning-hub">
+          <div className="hub-card">
+            <h3>Professional Scenario Game</h3>
+            <p>Practice decision-making with realistic case situations.</p>
+            <div className="toolbar">
+              <button
+                className="prompt-chip"
+                onClick={startScenarioGame}
+                disabled={typing || challenge.active}
+              >
+                Start Challenge
+              </button>
+              <button
+                className="prompt-chip"
+                onClick={stopScenarioGame}
+                disabled={!challenge.active}
+              >
+                End Challenge
+              </button>
+            </div>
+          </div>
+
+          <div className="hub-card">
+            <h3>Recommended Study Videos</h3>
+            <ul className="video-list">
+              {studyVideos.map((video) => (
+                <li key={video.title}>
+                  <a href={video.url} target="_blank" rel="noreferrer">
+                    {video.title}
+                  </a>
+                  <span>{video.topic}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {error && <div className="error-banner">{error}</div>}
 
-        <div className="toolbar">
-          <button
-            className="prompt-chip"
-            onClick={startGuessGame}
-            disabled={typing || game.active}
-          >
-            Start Guess Game
-          </button>
-          <button
-            className="prompt-chip"
-            onClick={stopGuessGame}
-            disabled={!game.active}
-          >
-            End Game
-          </button>
+        <div className="toolbar toolbar-bottom">
           <button
             className="prompt-chip"
             onClick={clearChat}
@@ -176,9 +249,7 @@ function App() {
           {chat.map((msg, index) => (
             <div
               key={`${msg.sender}-${index}`}
-              className={`message-row ${
-                msg.sender === "You" ? "row-user" : "row-bot"
-              }`}
+              className={`message-row ${msg.sender === "You" ? "row-user" : "row-bot"}`}
             >
               {/* ✅ ADDED MESSAGE CONTENT (NO DELETION) */}
               <div className="message-bubble">
@@ -188,7 +259,7 @@ function App() {
             </div>
           ))}
 
-          {typing && <div className="typing">Nova is thinking...</div>}
+          {typing && <div className="typing">Nova is preparing a response...</div>}
           <div ref={chatEndRef} />
         </div>
 
@@ -197,9 +268,7 @@ function App() {
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder={
-              game.active ? "Enter your guess (1-20)" : "Ask anything..."
-            }
+            placeholder={challenge.active ? "Answer with A, B, or C" : "Ask about study plans, real-world problems, or concepts..."}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             disabled={typing}
           />

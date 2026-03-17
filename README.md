@@ -1,16 +1,70 @@
-# React + Vite
+# Nova Chat Studio (React + FastAPI + Gemini-ready)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A polished, more playful chatbot app with:
+- a classy chat UI
+- general-purpose conversation support
+- optional Gemini API integration
+- a built-in mini game (Guess the Number)
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **General chatbot** (not limited to admission/course only)
+- **Gemini API support** via backend env vars
+- **Fallback local responses** when Gemini key is missing
+- **Quick prompt buttons** for fast interactions
+- **Mini game mode** (Guess a number from 1-20)
 
-## React Compiler
+## Project structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `src/` – React frontend
+- `backend/` – FastAPI backend
 
-## Expanding the ESLint configuration
+## Run locally
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 1) Backend
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install fastapi uvicorn
+uvicorn app:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 2) Frontend
+
+```bash
+npm install
+npm run dev
+```
+
+## Environment variables
+
+### Frontend
+
+```bash
+export VITE_API_BASE_URL="http://127.0.0.1:8000"
+```
+
+### Backend (optional Gemini)
+
+```bash
+export GEMINI_API_KEY="your_api_key_here"
+export GEMINI_MODEL="gemini-1.5-flash"
+```
+
+If `GEMINI_API_KEY` is not set, backend will use local fallback responses.
+
+## API
+
+### `POST /chat`
+
+```json
+{ "text": "Give me a productivity routine" }
+```
+
+### `GET /health`
+
+```json
+{ "status": "ok" }
+```

@@ -100,6 +100,8 @@ function App() {
       "Bot",
       "🎯 Professional Scenario Challenge started. Reply with A, B, or C."
     );
+    // Show the first scenario question right away.
+    pushMessage("Bot", scenarioChallenges[0].prompt);
   };
 
   const stopScenarioGame = () => {
@@ -222,62 +224,80 @@ function App() {
 
         {error && <div className="error-banner">{error}</div>}
 
-        <div className="toolbar toolbar-bottom">
-          <button
-            className="prompt-chip"
-            onClick={clearChat}
-            disabled={typing || chat.length <= 1}
-          >
-            Clear Chat
-          </button>
-        </div>
-
-        <div className="quick-prompts">
-          {quickPrompts.map((prompt) => (
+        <div className="quick-prompt-section">
+          <div className="section-heading-row">
+            <span className="section-heading">Quick prompts</span>
             <button
-              key={prompt}
-              className="prompt-chip ghost"
-              onClick={() => sendMessage(prompt)}
-              disabled={typing}
+              className="prompt-chip toolbar-action"
+              onClick={clearChat}
+              disabled={typing || chat.length <= 1}
             >
-              {prompt}
+              Clear Chat
             </button>
-          ))}
+          </div>
+
+          <div className="quick-prompts" aria-label="Quick prompts">
+            {quickPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                className="prompt-chip ghost"
+                onClick={() => sendMessage(prompt)}
+                disabled={typing}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="chat-box">
-          {chat.map((msg, index) => (
-            <div
-              key={`${msg.sender}-${index}`}
-              className={`message-row ${msg.sender === "You" ? "row-user" : "row-bot"}`}
-            >
-              {/* ✅ ADDED MESSAGE CONTENT (NO DELETION) */}
-              <div className="message-bubble">
-                <span className="message-text">{msg.text}</span>
-                <span className="message-time">{msg.time}</span>
-              </div>
+        <div className="chat-log-shell">
+          <div className="chat-log-header">
+            <div>
+              <span className="section-heading">Conversation</span>
+              <p className="chat-log-subtitle">
+                {challenge.active
+                  ? 'Scenario mode is active. Reply with A, B, or C.'
+                  : 'Your latest messages appear here.'}
+              </p>
             </div>
-          ))}
+          <span className={`status-pill ${challenge.active ? 'status-live' : ''}`}>
+              {challenge.active ? 'Live challenge' : 'Ready to chat'}
+            </span>
+          </div>
 
-          {typing && <div className="typing">Nova is preparing a response...</div>}
-          <div ref={chatEndRef} />
-        </div>
+          <div className="chat-box">
+            {chat.map((msg, index) => (
+              <div
+                key={`${msg.sender}-${index}`}
+                className={`message-row ${msg.sender === "You" ? "row-user" : "row-bot"}`}
+              >
+                <div className="message-bubble">
+                  <span className="message-text">{msg.text}</span>
+                  <span className="message-time">{msg.time}</span>
+                </div>
+              </div>
+            ))}
 
-        <div className="input-area">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder={challenge.active ? "Answer with A, B, or C" : "Ask about study plans, real-world problems, or concepts..."}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            disabled={typing}
-          />
-          <button
-            onClick={() => sendMessage()}
-            disabled={typing || !message.trim()}
-          >
-            Send
-          </button>
+            {typing && <div className="typing">Nova is preparing a response...</div>}
+            <div ref={chatEndRef} />
+          </div>
+
+          <div className="input-area">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={challenge.active ? "Answer with A, B, or C" : "Ask about study plans, real-world problems, or concepts..."}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              disabled={typing}
+            />
+            <button
+              onClick={() => sendMessage()}
+              disabled={typing || !message.trim()}
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>

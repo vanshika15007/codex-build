@@ -3,9 +3,13 @@ import os
 import random
 from urllib import error, parse, request
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+load_dotenv()
+
 app = FastAPI(title="Nova Chatbot API", version="2.1.0")
 
 app.add_middleware(
@@ -54,11 +58,12 @@ generic_fallbacks = [
 def ask_gemini(prompt: str) -> str | None:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
+        print("❌ GEMINI_API_KEY not found in environment")
         return None
 
     model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
     url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key="
+        f"https://generativelanguage.googleapis.com/v1/models/{model}:generateContent?key="
         f"{parse.quote(api_key)}"
     )
 
@@ -88,12 +93,26 @@ def ask_gemini(prompt: str) -> str | None:
             body = json.loads(res.read().decode("utf-8"))
             candidates = body.get("candidates", [])
             if not candidates:
+                print("❌ No candidates in Gemini response")
                 return None
             parts = candidates[0].get("content", {}).get("parts", [])
             if not parts:
+                print("❌ No parts in Gemini response")
                 return None
-            return parts[0].get("text")
-    except (error.URLError, TimeoutError, json.JSONDecodeError, KeyError):
+            response_text = parts[0].get("text")
+            print(f"✅ Gemini API success")
+            return response_text
+    except error.URLError as e:
+        print(f"❌ Gemini URLError: {e}")
+        return None
+    except TimeoutError as e:
+        print(f"❌ Gemini Timeout: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"❌ Gemini JSON decode error: {e}")
+        return None
+    except Exception as e:
+        print(f"❌ Gemini unexpected error: {e}")
         return None
 
 

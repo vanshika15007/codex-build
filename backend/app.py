@@ -1,18 +1,23 @@
-import json
 import os
-from urllib import error, parse, request
-
 from dotenv import load_dotenv
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from chat_logic import build_rule_based_response, fallback_response
+from groq import Groq
 
-load_dotenv()
+try:
+    from backend.chat_logic import build_rule_based_response, fallback_response
+except ImportError:
+    from chat_logic import build_rule_based_response, fallback_response
 
-app = FastAPI(title="Nova Chatbot API", version="2.1.0")
+# Load environment variables from the backend folder explicitly
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
+app = FastAPI(title="Nova Chatbot API", version="2.2.0")
+
+# CORS (allow frontend requests)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,91 +27,75 @@ app.add_middleware(
 )
 
 
+# Request schema
 class Message(BaseModel):
     text: str
 
 
-def ask_gemini(prompt: str) -> str | None:
-    api_key = os.getenv("GEMINI_API_KEY")
+# 🔥 Groq API function
+def ask_groq(prompt: str) -> str | None:
+    api_key = os.getenv("GROQ_API_KEY")
+
     if not api_key:
-        print("❌ GEMINI_API_KEY not found in environment")
+        print("❌ GROQ_API_KEY not found in environment")
         return None
-
-    model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-    url = (
-        f"https://generativelanguage.googleapis.com/v1/models/{model}:generateContent?key="
-        f"{parse.quote(api_key)}"
-    )
-
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": "You are Nova, a professional learning assistant. Be concise, structured, and practical. "
-                        "Provide actionable, real-world study advice when relevant. "
-                        f"User message: {prompt}"
-                    }
-                ]
-            }
-        ]
-    }
-
-    req = request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
 
     try:
-        with request.urlopen(req, timeout=12) as res:
-            body = json.loads(res.read().decode("utf-8"))
-            candidates = body.get("candidates", [])
-            if not candidates:
-                print("❌ No candidates in Gemini response")
-                return None
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if not parts:
-                print("❌ No parts in Gemini response")
-                return None
-            response_text = parts[0].get("text")
-            print("✅ Gemini API success")
-            return response_text
-    except error.URLError as e:
-        print(f"❌ Gemini URLError: {e}")
-        return None
-    except TimeoutError as e:
-        print(f"❌ Gemini Timeout: {e}")
-        return None
-    except json.JSONDecodeError as e:
-        print(f"❌ Gemini JSON decode error: {e}")
-        return None
+        client = Groq(api_key=api_key)
+
+        completion = client.chat.completions.create(
+            model=os.getenv("GROQ_MODEL", "llama3-8b-8192"),
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are Nova, a professional learning assistant. "
+                        "Be concise, structured, and practical. "
+                        "Provide actionable, real-world study advice when relevant."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            temperature=0.7,
+            max_tokens=500,
+        )
+
+        response_text = completion.choices[0].message.content
+        print("✅ Groq API success")
+        return response_text
+
     except Exception as e:
-        print(f"❌ Gemini unexpected error: {e}")
+        print(f"❌ Groq API error: {e}")
         return None
 
 
+# Health check route
 @app.get("/health")
-async def health() -> dict[str, str]:
+async def health():
     return {"status": "ok"}
 
 
+# Main chatbot route
 @app.post("/chat")
 async def chat(message: Message):
     text = message.text.lower().strip()
 
+    # Empty input check
     if not text:
         return {"response": "Please type a message so I can help."}
 
+    # Rule-based responses (fast)
     rule_based_response = build_rule_based_response(text)
     if rule_based_response:
         return {"response": rule_based_response}
 
-    # Greeting detection
-    gemini_response = ask_gemini(message.text.strip())
-    if gemini_response:
-        return {"response": gemini_response}
+    # 🔥 Groq AI response
+    groq_response = ask_groq(message.text.strip())
+    if groq_response:
+        return {"response": groq_response}
 
-    # Knowledge base search
+    # Fallback response
     return {"response": fallback_response()}

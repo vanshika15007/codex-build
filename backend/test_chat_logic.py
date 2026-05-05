@@ -29,3 +29,11 @@ def test_admission_keyword_still_matches_admissions_flow():
 
     assert body is not None
     assert "Admissions are open" in body
+
+
+if __name__ == "__main__":
+    test_math_applications_query_is_not_misrouted_to_admissions()
+    test_greeting_returns_helpful_response()
+    test_how_question_explains_capabilities()
+    test_admission_keyword_still_matches_admissions_flow()
+    print("All tests passed!")

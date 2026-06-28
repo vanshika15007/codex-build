@@ -59,6 +59,14 @@ const scenarioChallenges = [
   },
 ];
 
+const cleanDisplayText = (text) =>
+  text
+    .replace(/^.*?(Scenario \d:)/, "$1")
+    .replace(/^.*?(Professional Scenario Challenge)/, "$1")
+    .replace(/^.*?(Correct\.)/, "$1")
+    .replace(/^.*?(Not the best choice)/, "$1")
+    .replace(/â€¢/g, "|");
+
 function App() {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([
@@ -74,10 +82,12 @@ function App() {
   const [typing, setTyping] = useState(false);
   const [error, setError] = useState("");
   const [challenge, setChallenge] = useState({ active: false, index: 0, score: 0 });
-  const chatEndRef = useRef(null);
+  const chatBoxRef = useRef(null);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
   }, [chat, typing]);
 
   const pushMessage = (sender, text) => {
@@ -265,21 +275,22 @@ function App() {
             </span>
           </div>
 
-          <div className="chat-box">
+          <div className="chat-box" ref={chatBoxRef}>
             {chat.map((msg, index) => (
               <div
                 key={`${msg.sender}-${index}`}
                 className={`message-row ${msg.sender === "You" ? "row-user" : "row-bot"}`}
               >
                 <div className="message-bubble">
-                  <span className="message-text">{msg.text}</span>
+                  <span className="message-text">
+                    {msg.sender === "Bot" ? cleanDisplayText(msg.text) : msg.text}
+                  </span>
                   <span className="message-time">{msg.time}</span>
                 </div>
               </div>
             ))}
 
             {typing && <div className="typing">Nova is preparing a response...</div>}
-            <div ref={chatEndRef} />
           </div>
 
           <div className="input-area">
